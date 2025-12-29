@@ -537,9 +537,6 @@ public class Server {
         this.pluginManager.loadPlugins(this.pluginPath);
         this.enablePlugins(PluginLoadOrder.STARTUP);
 
-        CustomItemManager.get().closeRegistry();
-        EntityManager.get().closeRegistry();
-
         Item.initCreativeItems();
 
         craftingManager.rebuildPacket();
@@ -621,6 +618,9 @@ public class Server {
         EnumLevel.initLevels();
 
         this.enablePlugins(PluginLoadOrder.POSTWORLD);
+
+        CustomItemManager.get().closeRegistry();
+        EntityManager.get().closeRegistry();
 
         if (Nukkit.DEBUG < 2) {
             this.watchdog = new Watchdog(this, 60000);
