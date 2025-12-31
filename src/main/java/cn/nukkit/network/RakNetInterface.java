@@ -158,7 +158,7 @@ public class RakNetInterface implements AdvancedSourceInterface {
 
     @Override
     public void close(Player player, String reason) {
-        NetworkPlayerSession playerSession = this.getSession(player.getSocketAddress());
+        NetworkPlayerSession playerSession = this.getSession(player.getRawSocketAddress());
         if (playerSession != null) {
             playerSession.disconnect(reason);
         }
@@ -236,7 +236,7 @@ public class RakNetInterface implements AdvancedSourceInterface {
 
     @Override
     public Integer putPacket(Player player, DataPacket packet, boolean needACK, boolean immediate) {
-        RakNetPlayerSession session = this.sessions.get(player.getSocketAddress());
+        RakNetPlayerSession session = this.sessions.get(player.getRawSocketAddress());
         if (session != null) {
             session.sendPacket(packet);
         }

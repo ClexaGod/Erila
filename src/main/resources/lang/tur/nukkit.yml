@@ -16,6 +16,7 @@ settings:
  #AsyncTask worker sayısı
  #Otomatik olarak ayarlanırsa, çekirdek sayısını (en az 4) algılamaya çalışır
  async-workers: auto
+ proxy: false
 
 network:
  #Paketleri toplu işleme eşiği, bayt cinsinden. Sadece bu paketler sıkıştırılır.

@@ -1940,7 +1940,7 @@ public class Server {
      * @param player player
      */
     public void removePlayer(Player player) {
-        if (this.players.remove(player.getSocketAddress()) != null) {
+        if (this.players.remove(player.getRawSocketAddress()) != null) {
             return;
         }
 

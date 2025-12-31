@@ -177,7 +177,8 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
     private final Queue<Vector3> clientMovements = PlatformDependent.newMpscQueue(4);
 
     protected boolean connected = true;
-    protected final InetSocketAddress socketAddress;
+    protected final InetSocketAddress rawSocketAddress;
+    protected InetSocketAddress socketAddress;
     protected boolean removeFormat = true;
 
     protected String username;
@@ -795,6 +796,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         this.networkSession = interfaz.getSession(socketAddress);
         this.perm = new PermissibleBase(this);
         this.server = Server.getInstance();
+        this.rawSocketAddress = socketAddress;
         this.socketAddress = socketAddress;
         this.loaderId = Level.generateChunkLoaderId(this);
         this.gamemode = this.server.getGamemode();
@@ -2968,6 +2970,14 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                 this.displayName = this.username;
                 this.iusername = this.username.toLowerCase(Locale.ROOT);
                 this.setDataProperty(new StringEntityData(DATA_NAMETAG, this.username), false);
+
+                if (this.server.getConfig("settings.proxy", false)) {
+                    if (loginChainData.getWaterdogIP() != null){
+                        this.socketAddress = new InetSocketAddress(this.loginChainData.getWaterdogIP(), this.getRawPort());
+                    } else {
+                        this.close("", "Lütfen HUB sunucusundan giriş yapınız.");
+                    }
+                }
 
                 this.randomClientId = loginPacket.clientId;
                 this.uuid = loginPacket.clientUUID;
@@ -7352,5 +7362,17 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
      */
     public String getLanguage() {
         return this.loginChainData.getLanguageCode();
+    }
+
+    public String getRawAddress() {
+        return this.rawSocketAddress.getAddress().getHostAddress();
+    }
+
+    public int getRawPort() {
+        return this.rawSocketAddress.getPort();
+    }
+
+    public InetSocketAddress getRawSocketAddress() {
+        return this.rawSocketAddress;
     }
 }
