@@ -3335,52 +3335,132 @@ public class Level implements ChunkManager, Metadatable, GeneratorTaskFactory {
     }
 
     public Position getSafeSpawn() {
-        return this.getSafeSpawn(null);
+        return getSafeSpawn(this.getSpawnLocation(), 0, false, 20000);
     }
 
-    public Position getSafeSpawn(Vector3 spawn) {
-        if (spawn == null /*|| spawn.y < 1*/) {
-            spawn = this.getSpawnLocation();
+    public Position getSafeSpawn(boolean includeBase) {
+        return this.getSafeSpawn(includeBase, 0);
+    }
+
+    public Position getSafeSpawn(boolean includeBase, int radius) {
+        Vector3 base = includeBase
+                ? this.getSpawnLocation()
+                : getRandomBase(radius);
+        return getSafeSpawn(base, radius, false, 20000);
+    }
+
+    private Position getSafeSpawn(Vector3 base, int horizontalMaxOffset, boolean allowWaterUnder, int maxAttempts) {
+        if (base == null) return null;
+
+        Position origin = Position.fromObject(base, this);
+
+        if (standable(origin, allowWaterUnder)) {
+            return origin;
         }
 
-        Vector3 pos = spawn.floor();
-        FullChunk chunk = this.getChunk((int) pos.x >> 4, (int) pos.z >> 4, false);
-        int x = (int) pos.x & 0x0f;
-        int z = (int) pos.z & 0x0f;
-        if (chunk != null && chunk.isGenerated()) {
-            int y = NukkitMath.clamp((int) pos.y, this.getMinBlockY() + 1, this.getMaxBlockY() - 1);
-            boolean wasAir = chunk.getBlockId(x, y - 1, z) == 0;
-            for (; y > this.getMinBlockY(); --y) {
-                int fullId = chunk.getFullBlock(x, y, z);
-                Block block = Block.get(fullId >> Block.DATA_BITS, fullId & Block.DATA_MASK);
-                if (this.isFullBlock(block)) {
-                    if (wasAir) {
-                        y++;
+        int minY = getDimensionData().getMinHeight();
+        int maxY = getDimensionData().getMaxHeight();
+
+        int maxRadius = Math.max(
+                Math.abs((int) (base.y - minY)),
+                Math.abs((int) (maxY - base.y))
+        );
+
+        int attempts = 0;
+
+        for (int r = 1; r <= maxRadius; r++) {
+            int horizontalLimit = horizontalMaxOffset > 0
+                    ? Math.min(r, horizontalMaxOffset)
+                    : r;
+
+            for (int dx = -horizontalLimit; dx <= horizontalLimit; dx++) {
+                for (int dy = -r; dy <= r; dy++) {
+                    for (int dz = -horizontalLimit; dz <= horizontalLimit; dz++) {
+
+                        if (Math.abs(dx) != horizontalLimit
+                                && Math.abs(dy) != r
+                                && Math.abs(dz) != horizontalLimit)
+                            continue;
+
+                        Position check = origin.add(dx, dy, dz);
+                        attempts++;
+
+                        if (attempts > maxAttempts) {
+                            Position safe = findSafeY(base, allowWaterUnder);
+                            if (safe != null) return safe;
+                            return this.getSpawnLocation();
+                        }
+
+                        if (standable(check, allowWaterUnder)) {
+                            return check;
+                        }
                     }
-                    break;
-                } else {
-                    wasAir = true;
                 }
             }
-
-            for (; y >= this.getMinBlockY() && y < this.getMaxBlockY(); y++) {
-                int fullId = chunk.getFullBlock(x, y + 1, z);
-                Block block = Block.get(fullId >>  Block.DATA_BITS, fullId & Block.DATA_MASK);
-                if (!this.isFullBlock(block)) {
-                    fullId = chunk.getFullBlock(x, y, z);
-                    block = Block.get(fullId >>  Block.DATA_BITS, fullId & Block.DATA_MASK);
-                    if (!this.isFullBlock(block)) {
-                        return new Position(pos.x + 0.5, y + 0.51, pos.z + 0.5, this); // Hack: + 0.51 for slabs
-                    }
-                } else {
-                    ++y;
-                }
-            }
-
-            pos.y = y;
         }
 
-        return new Position(pos.x + 0.5, pos.y + 0.1, pos.z + 0.5, this);
+        return origin;
+    }
+
+    private boolean standable(Position pos, boolean allowWaterUnder) {
+        Block feet = pos.getLevelBlock();
+        Block head = pos.add(0, 1, 0).getLevelBlock();
+        Block under = pos.add(0, -1, 0).getLevelBlock();
+
+        if (!isPassable(feet) || !isPassable(head)) return false;
+
+        if (feet.getId() == Block.BEDROCK || head.getId() == Block.BEDROCK) return false;
+
+        int underId = under.getId();
+
+        if (allowWaterUnder) {
+            if (!(isSolid(under) || underId == Block.WATER || underId == Block.STILL_WATER)) return false;
+        } else {
+            if (!isSolid(under)) return false;
+        }
+
+        if (underId == Block.LAVA || underId == Block.STILL_LAVA || underId == Block.BEDROCK) return false;
+
+        int feetId = feet.getId();
+        if (feetId == Block.WATER || feetId == Block.STILL_WATER ||
+                feetId == Block.LAVA || feetId == Block.STILL_LAVA) return false;
+
+        return true;
+    }
+
+    private boolean isPassable(Block block) {
+        return block.getId() == Block.AIR || block.canPassThrough();
+    }
+
+    private boolean isSolid(Block block) {
+        return !block.canPassThrough();
+    }
+
+    private Vector3 getRandomBase(int radius) {
+        int x = ThreadLocalRandom.current().nextInt(-radius, radius);
+        int z = ThreadLocalRandom.current().nextInt(-radius, radius);
+        int y;
+
+        int dim = this.getDimensionData().getDimensionId();
+
+        if (dim == DIMENSION_NETHER) {
+            y = ThreadLocalRandom.current().nextInt(30, 100);
+        } else if (dim == DIMENSION_THE_END) {
+            y = getHighestBlockAt(x, z);
+        } else {
+            y = getHighestBlockAt(x, z);
+        }
+
+        return new Vector3(x + 0.5, y, z + 0.5);
+    }
+
+    private Position findSafeY(Vector3 base, boolean allowWaterUnder) {
+        int highest = getHighestBlockAt((int) base.x, (int) base.z);
+        for (int y = highest; y >= getDimensionData().getMinHeight(); y--) {
+            Position pos = Position.fromObject(base.setY(y), this);
+            if (standable(pos, allowWaterUnder)) return pos;
+        }
+        return null;
     }
 
     public int getTime() {

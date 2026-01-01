@@ -1188,7 +1188,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
         boolean dead = this.getHealth() < 1;
         Position spawn = dead ? this.getSpawn() : this;
-        PlayerRespawnEvent respawnEvent = new PlayerRespawnEvent(this, spawn.level.getSafeSpawn(spawn), true);
+        PlayerRespawnEvent respawnEvent = new PlayerRespawnEvent(this, spawn.level.getSafeSpawn(true), true);
         this.server.getPluginManager().callEvent(respawnEvent);
 
         this.spawned = true;
@@ -2595,7 +2595,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
     protected void processLogin() {
         String lowerName = this.iusername;
         if (!this.server.isWhitelisted(lowerName)) {
-            this.kick(PlayerKickEvent.Reason.NOT_WHITELISTED, "§f§l»§r§a BEKLENEN AN GELDİ!\nSkyBlock sunucumuz yarın açılıyor. Açılışımıza tüm oyuncularımızı bekliyoruz.\n§fDaha fazla bilgi için;\n§c§l»§r§c DISCORD:§4 https://discord.gg/evPxn5r2Jd\n§c§l»§r§c INSTAGRAM:§4 @erilanetwork", false);
+            this.kick(PlayerKickEvent.Reason.NOT_WHITELISTED, Server.getInstance().getConfig("settings.whitelist-message", "Server is white-listed"), false);
             return;
         } else if (this.isBanned()) {
             String reason = this.server.getNameBans().getEntires().get(lowerName).getReason();

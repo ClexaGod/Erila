@@ -9,6 +9,8 @@ settings:
  #Whether to send all strings translated to server locale or let the device handle them
  force-language: false
  shutdown-message: "Server closed"
+ #Kick message shown if the server whitelist is enabled and the player is not whitelisted
+ whitelist-message: "Server is white-listed"
  #Allow listing plugins via Query
  query-plugins: true
  #Show a console message when a plugin uses deprecated API methods

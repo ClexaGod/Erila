@@ -5,10 +5,12 @@
 settings:
  #Çoklu dil ayarı
  #Kullanılabilenler: eng, chs, cht, jpn, rus, spa, pol, bra, kor, ukr, deu, ltu, idn, cze, tur, fin
- language: "eng"
+ language: "tur"
  #Çevirilen tüm yazıları sunucuya mı göndermek yoksa cihazın bunları işlemesine izin mi vermek
  force-language: false
- shutdown-message: "Server closed"
+ shutdown-message: "Sunucu yeniden başlatılıyor.."
+ #Sunucu beyaz listesi açıksa ve oyuncu beyaz listede değilse ekrana çıkan tekmeleme yazısı
+ whitelist-message: "Sunucu bakımda!"
  #Query yoluyla eklentilerin listelenmesine izin verir
  query-plugins: true
  #Bir eklenti deprecated API metotları kullanıyorsa konsola yazdırır

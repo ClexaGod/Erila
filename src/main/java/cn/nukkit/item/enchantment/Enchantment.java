@@ -21,6 +21,7 @@ import cn.nukkit.item.enchantment.trident.EnchantmentTridentChanneling;
 import cn.nukkit.item.enchantment.trident.EnchantmentTridentImpaling;
 import cn.nukkit.item.enchantment.trident.EnchantmentTridentLoyalty;
 import cn.nukkit.item.enchantment.trident.EnchantmentTridentRiptide;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -146,6 +147,7 @@ public abstract class Enchantment implements Cloneable {
     private final Rarity rarity;
     public EnchantmentType type;
 
+    @Getter
     protected int level = 1;
 
     protected final String name;
@@ -158,12 +160,8 @@ public abstract class Enchantment implements Cloneable {
         this.name = name;
     }
 
-    public int getLevel() {
-        return level;
-    }
-
     public Enchantment setLevel(int level) {
-        return this.setLevel(level, true);
+        return this.setLevel(level, false);
     }
 
     public Enchantment setLevel(int level, boolean safe) {
